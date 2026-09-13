@@ -63,12 +63,12 @@ export const env = {
   university: str(process.env.NEXT_PUBLIC_DEFAULT_UNIVERSITY, "Bangladesh University"),
   department: str(process.env.NEXT_PUBLIC_DEFAULT_DEPARTMENT, "Department of CSE"),
   logoUrl: str(process.env.NEXT_PUBLIC_DEFAULT_LOGO_URL, "/logos/bu-logo.png"),
-  program: str(process.env.NEXT_PUBLIC_DEFAULT_PROGRAM, ""),
-  batch: str(process.env.NEXT_PUBLIC_DEFAULT_BATCH, ""),
-  semester: str(process.env.NEXT_PUBLIC_DEFAULT_SEMESTER, ""),
-  section: str(process.env.NEXT_PUBLIC_DEFAULT_SECTION, ""),
-  studentName: str(process.env.NEXT_PUBLIC_DEFAULT_STUDENT_NAME, ""),
-  studentId: str(process.env.NEXT_PUBLIC_DEFAULT_STUDENT_ID, ""),
+  program: str(process.env.NEXT_PUBLIC_DEFAULT_PROGRAM, "B.Sc. in CSE"),
+  batch: str(process.env.NEXT_PUBLIC_DEFAULT_BATCH, "68 - Evening"),
+  semester: str(process.env.NEXT_PUBLIC_DEFAULT_SEMESTER, "Summer 2025"),
+  section: str(process.env.NEXT_PUBLIC_DEFAULT_SECTION, "B"),
+  studentName: str(process.env.NEXT_PUBLIC_DEFAULT_STUDENT_NAME, "A. A. M Ashfatul Islam"),
+  studentId: str(process.env.NEXT_PUBLIC_DEFAULT_STUDENT_ID, "202411068038"),
 
   template: oneOf<TemplateId>(
     process.env.NEXT_PUBLIC_DEFAULT_TEMPLATE,

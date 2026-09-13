@@ -63,9 +63,28 @@ function FieldShell({
           </label>
           <div className="flex items-center gap-1.5">
             {warning && !error && (
-              <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
-                Needs update
-              </span>
+              <div className="group relative inline-flex items-center">
+                <span
+                  tabIndex={0}
+                  className="inline-flex cursor-help items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 border border-amber-200/80 transition-colors hover:bg-amber-100 focus:outline-hidden focus:ring-1 focus:ring-amber-400"
+                  aria-label={warning}
+                  title={warning}
+                >
+                  <AlertTriangle className="size-3 shrink-0 text-amber-600" />
+                  <span>May need change</span>
+                </span>
+                {/* Floating tooltip on hover/focus */}
+                <div
+                  role="tooltip"
+                  className="pointer-events-none absolute right-0 bottom-full z-40 mb-1.5 hidden w-64 max-w-[85vw] rounded-md bg-gray-900 p-2 text-[11px] leading-snug font-normal text-white shadow-lg ring-1 ring-black/10 group-hover:block group-focus-within:block"
+                >
+                  <div className="flex items-start gap-1.5">
+                    <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-amber-400" />
+                    <span>{warning}</span>
+                  </div>
+                  <div className="absolute top-full right-4 -mt-px border-4 border-transparent border-t-gray-900" />
+                </div>
+              </div>
             )}
             {action}
           </div>
@@ -76,11 +95,6 @@ function FieldShell({
         <p role="alert" className="mt-1 flex items-center gap-1 text-xs font-medium text-red-600">
           <AlertCircle className="size-3.5 shrink-0" />
           <span>{error}</span>
-        </p>
-      ) : warning ? (
-        <p className="mt-1 flex items-center gap-1 text-xs text-amber-700">
-          <AlertTriangle className="size-3.5 shrink-0" />
-          <span>{warning}</span>
         </p>
       ) : hint ? (
         <p id={hintId} className="mt-1 text-xs text-[var(--ui-muted)]">
@@ -321,6 +335,56 @@ export function Segmented<T extends string>({
 }
 
 /* -------------------------------------------------------------------------- */
+/* Checkbox                                                                   */
+/* -------------------------------------------------------------------------- */
+
+export function Checkbox({
+  label,
+  hint,
+  checked,
+  onCheckedChange,
+  disabled = false,
+  className = "",
+}: {
+  label: ReactNode;
+  hint?: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const id = useId();
+  const hintId = `${id}-hint`;
+
+  return (
+    <label
+      htmlFor={id}
+      className={`flex items-start gap-3 select-none ${
+        disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+      } ${className}`}
+    >
+      <input
+        type="checkbox"
+        id={id}
+        checked={checked}
+        disabled={disabled}
+        onChange={(event) => onCheckedChange(event.target.checked)}
+        aria-describedby={hint ? hintId : undefined}
+        className="mt-0.5 size-4.5 cursor-pointer rounded border-[var(--ui-line)] text-gray-900 accent-gray-900 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed"
+      />
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-medium text-[var(--ui-text)]">{label}</div>
+        {hint && (
+          <p id={hintId} className="mt-0.5 text-xs text-[var(--ui-muted)]">
+            {hint}
+          </p>
+        )}
+      </div>
+    </label>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /* Switch                                                                     */
 /* -------------------------------------------------------------------------- */
 
@@ -339,9 +403,17 @@ export function Switch({
 }) {
   const hintId = useId();
   return (
-    <div className="flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <div className="text-sm text-[var(--ui-text)]">{label}</div>
+    <div
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest("button")) return;
+        if (!disabled) onCheckedChange(!checked);
+      }}
+      className={`flex items-start justify-between gap-3 select-none ${
+        disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+      }`}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-medium text-[var(--ui-text)]">{label}</div>
         {hint && (
           <p id={hintId} className="mt-0.5 text-xs text-[var(--ui-muted)]">
             {hint}

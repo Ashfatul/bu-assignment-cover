@@ -16,6 +16,7 @@ import {
   Accordion,
   BUTTON_GHOST,
   BUTTON_SECONDARY,
+  Checkbox,
   Grid,
   SelectField,
   Stack,
@@ -377,16 +378,21 @@ export function StudentSection() {
           />
         </Grid>
 
-        <div className="rounded-lg border border-[var(--ui-line)] p-3">
-          <Switch
+        <div className="rounded-lg border border-[var(--ui-line)] bg-gray-50/50 p-3.5 transition-colors">
+          <Checkbox
             label="Group submission"
             hint="Adds a list of team members under your details"
             checked={group.enabled}
-            onCheckedChange={(enabled) => patchData("group", { enabled })}
+            onCheckedChange={(enabled) => {
+              patchData("group", { enabled });
+              if (enabled && group.members.length === 0) {
+                addMember();
+              }
+            }}
           />
 
           {group.enabled && (
-            <div className="mt-3 flex flex-col gap-2">
+            <div className="mt-3 flex flex-col gap-2.5 border-t border-[var(--ui-line)] pt-3">
               {showValidation && validation.errors["groupMembers"] && (
                 <p role="alert" className="flex items-center gap-1 text-xs font-medium text-red-600">
                   <AlertCircle className="size-3.5 shrink-0" />
@@ -394,59 +400,75 @@ export function StudentSection() {
                 </p>
               )}
 
-              {group.members.map((member, index) => (
-                <div key={member.id} className="flex items-end gap-2">
-                  <span className="pb-2.5 text-xs text-[var(--ui-muted)] tabular-nums">
-                    {index + 1}.
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <TextField
-                      label={index === 0 ? "Name" : undefined}
-                      placeholder="Member name"
-                      required
-                      value={member.name}
-                      error={
-                        showValidation && !member.name.trim()
-                          ? "Name is required"
-                          : null
-                      }
-                      onValueChange={(name) => updateMember(member.id, { name })}
-                    />
-                  </div>
-                  <div className="w-32 shrink-0">
-                    <TextField
-                      label={index === 0 ? "ID" : undefined}
-                      placeholder="ID"
-                      required
-                      value={member.studentId}
-                      error={
-                        showValidation && !member.studentId.trim()
-                          ? "ID is required"
-                          : null
-                      }
-                      onValueChange={(studentId) => updateMember(member.id, { studentId })}
-                    />
-                  </div>
+              {group.members.length === 0 ? (
+                <div className="rounded-md border border-dashed border-[var(--ui-line)] bg-white p-3 text-center">
+                  <p className="text-xs text-[var(--ui-muted)]">No team members added yet.</p>
                   <button
                     type="button"
-                    onClick={() => removeMember(member.id)}
-                    aria-label={`Remove member ${index + 1}`}
-                    className="mb-0.5 rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-red-600"
+                    onClick={addMember}
+                    className={`${BUTTON_SECONDARY} mt-2 px-3 py-1.5 text-xs`}
                   >
-                    <Trash2 className="size-4" />
+                    <Plus className="size-3.5" />
+                    Add Member 1
                   </button>
                 </div>
-              ))}
+              ) : (
+                group.members.map((member, index) => (
+                  <div key={member.id} className="flex items-end gap-2">
+                    <span className="pb-2.5 text-xs text-[var(--ui-muted)] tabular-nums font-medium">
+                      {index + 1}.
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <TextField
+                        label={index === 0 ? "Member Name" : undefined}
+                        placeholder="Member name"
+                        required
+                        value={member.name}
+                        error={
+                          showValidation && !member.name.trim()
+                            ? "Name is required"
+                            : null
+                        }
+                        onValueChange={(name) => updateMember(member.id, { name })}
+                      />
+                    </div>
+                    <div className="w-32 shrink-0">
+                      <TextField
+                        label={index === 0 ? "Member ID" : undefined}
+                        placeholder="ID"
+                        required
+                        value={member.studentId}
+                        error={
+                          showValidation && !member.studentId.trim()
+                            ? "ID is required"
+                            : null
+                        }
+                        onValueChange={(studentId) => updateMember(member.id, { studentId })}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeMember(member.id)}
+                      aria-label={`Remove member ${index + 1}`}
+                      title={`Remove member ${index + 1}`}
+                      className="mb-0.5 cursor-pointer rounded-md p-2 text-gray-400 hover:bg-gray-200 hover:text-red-600"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                ))
+              )}
 
-              <button
-                type="button"
-                onClick={addMember}
-                disabled={group.members.length >= MAX_MEMBERS}
-                className={`${BUTTON_SECONDARY} self-start px-3 py-1.5 text-xs`}
-              >
-                <Plus className="size-3.5" />
-                Add member
-              </button>
+              {group.members.length > 0 && group.members.length < MAX_MEMBERS && (
+                <button
+                  type="button"
+                  onClick={addMember}
+                  className={`${BUTTON_SECONDARY} self-start px-3 py-1.5 text-xs`}
+                >
+                  <Plus className="size-3.5" />
+                  Add member ({group.members.length}/{MAX_MEMBERS})
+                </button>
+              )}
 
               {group.members.length >= MAX_MEMBERS && (
                 <p className="text-xs text-[var(--ui-muted)]">

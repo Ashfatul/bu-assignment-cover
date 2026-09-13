@@ -49,10 +49,21 @@ export function PreviewFrame({
     const el = containerRef.current;
     if (!el) return;
 
-    // Breathing room so the paper shadow isn't clipped
-    const inset = compact ? 8 : 28;
-    const availableWidth = el.clientWidth - inset;
-    const availableHeight = el.clientHeight - inset;
+    // Accurately subtract the container's actual padding (p-3 / sm:p-4)
+    // plus extra clearance for the paper's drop shadow so it never triggers scrollbars
+    const style = typeof window !== "undefined" ? window.getComputedStyle(el) : null;
+    const padX = style
+      ? parseFloat(style.paddingLeft || "0") + parseFloat(style.paddingRight || "0")
+      : (compact ? 8 : 32);
+    const padY = style
+      ? parseFloat(style.paddingTop || "0") + parseFloat(style.paddingBottom || "0")
+      : (compact ? 8 : 32);
+
+    const clearanceX = compact ? 6 : 24;
+    const clearanceY = compact ? 6 : 24;
+
+    const availableWidth = Math.floor(el.clientWidth - padX - clearanceX);
+    const availableHeight = Math.floor(el.clientHeight - padY - clearanceY);
     if (availableWidth <= 0) return;
 
     let next = availableWidth / pageWidthPx;
@@ -113,10 +124,10 @@ export function PreviewFrame({
         ref={containerRef}
         className={`scroll-thin min-h-0 flex-1 overflow-auto ${compact ? "p-1" : "p-3 sm:p-4"}`}
       >
-        {/* Centers the page neatly within the preview pane */}
-        <div className="flex min-h-full min-w-full items-center justify-center">
+        {/* Centers the page neatly; m-auto preserves natural scrolling from top-left when zoomed in */}
+        <div className="flex min-h-full min-w-full">
           <div
-            className="transition-[width,height] duration-150 ease-out"
+            className="m-auto transition-[width,height] duration-150 ease-out"
             style={{ width: pageWidthPx * scale, height: pageHeightPx * scale }}
           >
             <div
