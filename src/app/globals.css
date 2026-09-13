@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-lora), ui-serif, Georgia, serif;
+}
+
+:root {
+  --ui-bg: #f6f7f9;
+  --ui-panel: #ffffff;
+  --ui-line: #e5e7eb;
+  --ui-text: #111827;
+  --ui-muted: #6b7280;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Keep focus rings visible for keyboard users, quiet for mouse users. */
+:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* The scrollable form column: thin, unobtrusive scrollbar. */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* --------------------------------------------------------------------------
+   The cover page itself.
+
+   Authored in millimetres so one CSS mm on screen equals one mm on paper.
+   Every template reads its type sizes from --page-base, which the preview
+   sets from the chosen font scale.
+   -------------------------------------------------------------------------- */
+.cover-page {
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #ffffff;
+  font-size: var(--page-base);
+  line-height: 1.35;
+  /* Avoid synthetic-bold reflow differences between screen and print. */
+  text-rendering: geometricPrecision;
+}
+
+.cover-page * {
+  box-sizing: border-box;
+}
+
+/* --------------------------------------------------------------------------
+   Print
+
+   Only #print-root survives. It is lifted out of the app's flex/transform
+   layout into a plain block at the page origin, at natural size (no scale),
+   so the browser lays it out as a real A4/Letter page with vector text.
+   -------------------------------------------------------------------------- */
+@media print {
+  /* The concrete page size is injected as its own <style> before printing —
+     `size:` does not accept a custom property in any current browser. */
+  @page {
+    margin: 0;
+  }
+
+  /* The preview column may be display:none on a phone; force it back. */
+  .print-show {
+    display: block !important;
+  }
+
+  html,
+  body {
+    width: auto;
+    height: auto;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  /* Hide everything, then walk the ancestor chain of #print-root back in. */
+  body * {
+    visibility: hidden;
+  }
+
+  /* `visibility: hidden` keeps boxes in the flow, and a full-height app shell
+     would emit a blank second sheet. Collapse the shell instead; #print-root is
+     absolutely positioned against the page, so it escapes the clip. */
+  body > * {
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  #print-root,
+  #print-root * {
+    visibility: visible;
+  }
+
+  #print-root {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+    /* Let the mm-sized .cover-page decide the footprint: the px width used for
+       the on-screen fit can round a hair over the page box and spill a sheet. */
+    width: auto !important;
+    height: auto !important;
+    /* Cancel the on-screen fit-to-width scaling. */
+    transform: none !important;
+    zoom: 1 !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  #print-root .cover-page {
+    box-shadow: none !important;
+    outline: none !important;
+    /* A stray sub-pixel rounding here can spill onto a second sheet. */
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Accent bands, rails and the watermark must survive the print pipeline. */
+  #print-root,
+  #print-root * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  :focus-visible {
+    outline: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
