@@ -127,7 +127,7 @@ function TemplateSection() {
               type="button"
               onClick={() => setTemplate(id)}
               aria-pressed={active}
-              className={`flex items-start gap-3 rounded-lg border p-3 text-left transition-colors ${
+              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-left transition-colors ${
                 active
                   ? "border-gray-900 bg-gray-50"
                   : "border-[var(--ui-line)] hover:border-gray-300"
@@ -380,7 +380,7 @@ function LayoutSection() {
                 onClick={() => move(id, -1)}
                 disabled={index === 0}
                 aria-label={`Move ${SECTION_LABELS[id]} up`}
-                className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-[var(--ui-text)] disabled:opacity-30"
+                className="cursor-pointer rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-[var(--ui-text)] disabled:cursor-not-allowed disabled:opacity-30"
               >
                 <ArrowUp className="size-3.5" />
               </button>
@@ -389,7 +389,7 @@ function LayoutSection() {
                 onClick={() => move(id, 1)}
                 disabled={index === layout.sectionOrder.length - 1}
                 aria-label={`Move ${SECTION_LABELS[id]} down`}
-                className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-[var(--ui-text)] disabled:opacity-30"
+                className="cursor-pointer rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-[var(--ui-text)] disabled:cursor-not-allowed disabled:opacity-30"
               >
                 <ArrowDown className="size-3.5" />
               </button>

@@ -19,7 +19,7 @@ const FIELD_BASE =
 const FIELD = `${FIELD_BASE} border-[var(--ui-line)] bg-white text-[var(--ui-text)] focus:border-blue-500 focus:ring-blue-500/20`;
 
 export const BUTTON =
-  "inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
 export const BUTTON_PRIMARY = `${BUTTON} bg-gray-900 text-white hover:bg-gray-800`;
 export const BUTTON_SECONDARY = `${BUTTON} border border-[var(--ui-line)] bg-white text-[var(--ui-text)] hover:bg-gray-50`;
 export const BUTTON_GHOST = `${BUTTON} text-[var(--ui-muted)] hover:bg-gray-100 hover:text-[var(--ui-text)]`;
@@ -249,7 +249,7 @@ export function SelectField({
           value={value}
           onChange={(event) => onValueChange(event.target.value)}
           aria-describedby={hint ? hintId : undefined}
-          className={`${FIELD} appearance-none pr-9 ${className}`}
+          className={`${FIELD} cursor-pointer appearance-none pr-9 ${className}`}
         >
           {options.map((option) => (
             <option key={option.value} value={option.value}>
@@ -305,7 +305,7 @@ export function Segmented<T extends string>({
               role="radio"
               aria-checked={active}
               onClick={() => onValueChange(option.value)}
-              className={`flex-1 rounded-md font-medium transition-colors ${pad} ${
+              className={`flex-1 cursor-pointer rounded-md font-medium transition-colors ${pad} ${
                 active
                   ? "bg-white text-[var(--ui-text)] shadow-sm"
                   : "text-[var(--ui-muted)] hover:text-[var(--ui-text)]"
@@ -356,7 +356,7 @@ export function Switch({
         aria-describedby={hint ? hintId : undefined}
         disabled={disabled}
         onClick={() => onCheckedChange(!checked)}
-        className={`relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
+        className={`relative mt-0.5 h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
           checked ? "bg-gray-900" : "bg-gray-300"
         }`}
       >
@@ -447,7 +447,7 @@ export function ColorField({
             aria-label={`Use ${swatch}`}
             aria-pressed={swatch.toUpperCase() === value.toUpperCase()}
             style={{ background: swatch }}
-            className={`size-6 rounded-md ring-1 ring-black/10 transition-transform hover:scale-110 ${
+            className={`size-6 cursor-pointer rounded-md ring-1 ring-black/10 transition-transform hover:scale-110 ${
               swatch.toUpperCase() === value.toUpperCase()
                 ? "ring-2 ring-gray-900 ring-offset-2"
                 : ""
@@ -500,7 +500,7 @@ export function SliderField({
         step={step}
         value={value}
         onChange={(event) => onValueChange(Number(event.target.value))}
-        className="w-full accent-gray-900"
+        className="w-full cursor-pointer accent-gray-900"
       />
     </div>
   );
@@ -553,7 +553,7 @@ export function Accordion({
           onClick={() => setOpen(!open)}
           aria-expanded={open}
           aria-controls={panelId}
-          className="flex flex-1 items-center gap-3 px-4 py-3 text-left hover:bg-gray-50"
+          className="flex flex-1 cursor-pointer items-center gap-3 px-4 py-3 text-left hover:bg-gray-50"
         >
           {icon && <span className="shrink-0 text-[var(--ui-muted)]">{icon}</span>}
           <span className="min-w-0 flex-1">
@@ -586,7 +586,7 @@ export function Accordion({
             onClick={onReset}
             title={`Reset ${title.toLowerCase()}`}
             aria-label={`Reset ${title.toLowerCase()}`}
-            className="mr-2 rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-[var(--ui-text)]"
+            className="mr-2 cursor-pointer rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-[var(--ui-text)]"
           >
             <RotateCcw className="size-3.5" />
           </button>
