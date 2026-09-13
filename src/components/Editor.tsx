@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  AlertCircle,
+  AlertTriangle,
   ChevronDown,
   ChevronUp,
   FileText,
@@ -15,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ActionBar } from "@/components/actions/ActionBar";
 import { EmailDialog } from "@/components/actions/EmailDialog";
+import { UnchangedDefaultsDialog } from "@/components/actions/UnchangedDefaultsDialog";
 import { AdvancedPanel } from "@/components/form/AdvancedPanel";
 import {
   DatesSection,
@@ -27,11 +30,14 @@ import { PreviewFrame } from "@/components/preview/PreviewFrame";
 import { BUTTON_GHOST, Segmented } from "@/components/ui/controls";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
 import { env, sampleState } from "@/config/defaults";
+import { suggestedFilename } from "@/lib/cover-model";
+import { coverToPdfBlob, downloadBlob } from "@/lib/pdf";
 import { clearHash, readSettingsFromHash } from "@/lib/share";
 import type { CoverState } from "@/lib/schema";
 import { CoverStoreProvider, useCoverStore } from "@/lib/store";
 import { readDraft, readDraftEnabled, useLocalDraft } from "@/lib/useLocalDraft";
 import { usePrint } from "@/lib/usePrint";
+import type { ValidationReport } from "@/lib/validation";
 
 export function Editor() {
   return (
@@ -46,7 +52,15 @@ export function Editor() {
 type MobileView = "edit" | "preview";
 
 function EditorShell() {
-  const { state, replaceState, resetAll } = useCoverStore();
+  const {
+    state,
+    replaceState,
+    resetAll,
+    validation,
+    showValidation,
+    setShowValidation,
+    openAllSectionsWithErrors,
+  } = useCoverStore();
   const { show } = useToast();
 
   const draft = useLocalDraft(state);
@@ -59,6 +73,9 @@ function EditorShell() {
   const [emailAvailable, setEmailAvailable] = useState<boolean | null>(
     env.emailEnabled ? null : false,
   );
+  const [warningAction, setWarningAction] = useState<"print" | "download" | "email" | null>(null);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   /* ---- restore draft + style link, once, after mount ------------------- */
   useEffect(() => {
@@ -126,17 +143,78 @@ function EditorShell() {
 
   const print = usePrint(state.settings.layout.paper, () => clearDraftAfterOutput("printing"));
 
+  const executeDownload = useCallback(async () => {
+    const node = coverRef.current;
+    if (!node) return;
+    setDownloading(true);
+    try {
+      const blob = await coverToPdfBlob(node, state.settings.layout.paper);
+      downloadBlob(blob, suggestedFilename(state.data));
+      show({
+        tone: "info",
+        message: "Downloaded. For sharper text, use Print → Save as PDF instead.",
+      });
+      clearDraftAfterOutput("downloading");
+    } catch {
+      show({ tone: "error", message: "Could not build the PDF. Try the print dialog." });
+    } finally {
+      setDownloading(false);
+    }
+  }, [clearDraftAfterOutput, coverRef, show, state.data, state.settings.layout.paper]);
+
+  const runWithValidation = useCallback(
+    (actionType: "print" | "download" | "email", actionFn: () => void) => {
+      if (!validation.isValid) {
+        setShowValidation(true);
+        openAllSectionsWithErrors();
+        show({
+          tone: "error",
+          message: `Cannot export: please fill in all required fields (${validation.errorCount} missing).`,
+        });
+        return;
+      }
+
+      if (validation.warningCount > 0) {
+        setPendingAction(() => actionFn);
+        setWarningAction(actionType);
+        return;
+      }
+
+      actionFn();
+    },
+    [
+      openAllSectionsWithErrors,
+      setShowValidation,
+      show,
+      validation.errorCount,
+      validation.isValid,
+      validation.warningCount,
+    ],
+  );
+
+  const handlePrint = useCallback(() => {
+    runWithValidation("print", print);
+  }, [print, runWithValidation]);
+
+  const handleDownload = useCallback(() => {
+    runWithValidation("download", executeDownload);
+  }, [executeDownload, runWithValidation]);
+
+  const handleEmail = useCallback(() => {
+    runWithValidation("email", () => setEmailOpen(true));
+  }, [runWithValidation]);
+
   /* ---- Ctrl/Cmd+P runs our print path, not the browser's --------------- */
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "p") {
         event.preventDefault();
-        print();
+        handlePrint();
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [print]);
+  }, [handlePrint]);
 
   const resetEverything = () => {
     if (!window.confirm("Clear the form and start over?")) return;
@@ -171,8 +249,10 @@ function EditorShell() {
           <ActionBar
             state={state}
             coverRef={coverRef}
-            onPrint={print}
-            onEmail={() => setEmailOpen(true)}
+            onPrint={handlePrint}
+            onDownload={handleDownload}
+            onEmail={handleEmail}
+            downloading={downloading}
             emailAvailable={emailAvailable}
           />
         }
@@ -200,6 +280,8 @@ function EditorShell() {
           <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-28 lg:pb-6">
             <div className="flex flex-col gap-3">
               <MobilePeek state={state} onOpenFull={() => setMobileView("preview")} />
+
+              <ValidationBanner validation={validation} showValidation={showValidation} />
 
               <InstitutionSection />
               <DocumentSection />
@@ -267,8 +349,10 @@ function EditorShell() {
             <ActionBar
               state={state}
               coverRef={coverRef}
-              onPrint={print}
-              onEmail={() => setEmailOpen(true)}
+              onPrint={handlePrint}
+              onDownload={handleDownload}
+              onEmail={handleEmail}
+              downloading={downloading}
               emailAvailable={emailAvailable}
               compact
             />
@@ -283,8 +367,68 @@ function EditorShell() {
         coverRef={coverRef}
         onSent={() => clearDraftAfterOutput("sending")}
       />
+
+      {warningAction && (
+        <UnchangedDefaultsDialog
+          open={Boolean(warningAction)}
+          onClose={() => {
+            setWarningAction(null);
+            setPendingAction(null);
+          }}
+          onProceed={() => {
+            const action = pendingAction;
+            setWarningAction(null);
+            setPendingAction(null);
+            action?.();
+          }}
+          validation={validation}
+          actionType={warningAction}
+        />
+      )}
     </div>
   );
+}
+
+function ValidationBanner({
+  validation,
+  showValidation,
+}: {
+  validation: ValidationReport;
+  showValidation: boolean;
+}) {
+  if (showValidation && !validation.isValid) {
+    return (
+      <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-900 shadow-xs">
+        <AlertCircle className="mt-0.5 size-4 shrink-0 text-red-600" />
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-red-800">
+            {validation.errorCount} required {validation.errorCount === 1 ? "field is" : "fields are"} missing
+          </p>
+          <p className="mt-0.5 text-red-700">
+            Complete all fields marked with an asterisk (<span className="font-bold text-red-600">*</span>) before exporting or printing.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (validation.warningCount > 0) {
+    return (
+      <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-900 shadow-xs">
+        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-amber-800">
+            {validation.warningCount} {validation.warningCount === 1 ? "field has" : "fields have"} reference sample defaults
+          </p>
+          <p className="mt-0.5 text-amber-700">
+            Fields highlighted in amber retain sample data from the reference PDF. Update course, topic, date, or instructor if needed.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 /* -------------------------------------------------------------------------- */

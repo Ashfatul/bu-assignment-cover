@@ -17,6 +17,8 @@ export function ActionBar({
   coverRef,
   onPrint,
   onEmail,
+  onDownload,
+  downloading = false,
   emailAvailable,
   compact = false,
 }: {
@@ -24,17 +26,21 @@ export function ActionBar({
   coverRef: RefObject<HTMLDivElement | null>;
   onPrint: () => void;
   onEmail: () => void;
+  onDownload?: () => void;
+  downloading?: boolean;
   /** null while we're still asking the server whether SMTP is configured. */
   emailAvailable: boolean | null;
   compact?: boolean;
 }) {
   const { show } = useToast();
-  const [downloading, setDownloading] = useState(false);
+  const [internalDownloading, setInternalDownloading] = useState(false);
 
-  const download = async () => {
+  const isDownloading = downloading || internalDownloading;
+
+  const defaultDownload = async () => {
     const node = coverRef.current;
     if (!node) return;
-    setDownloading(true);
+    setInternalDownloading(true);
     try {
       const blob = await coverToPdfBlob(node, state.settings.layout.paper);
       downloadBlob(blob, suggestedFilename(state.data));
@@ -45,9 +51,11 @@ export function ActionBar({
     } catch {
       show({ tone: "error", message: "Could not build the PDF. Try the print dialog." });
     } finally {
-      setDownloading(false);
+      setInternalDownloading(false);
     }
   };
+
+  const handleDownload = onDownload ?? defaultDownload;
 
   return (
     <div className={`flex items-center gap-2 ${compact ? "" : "flex-wrap"}`}>
@@ -58,12 +66,12 @@ export function ActionBar({
 
       <button
         type="button"
-        onClick={download}
-        disabled={downloading}
+        onClick={handleDownload}
+        disabled={isDownloading}
         className={BUTTON_SECONDARY}
         title="Download a PDF file directly (image-based)"
       >
-        {downloading ? (
+        {isDownloading ? (
           <Loader2 className="size-4 animate-spin" />
         ) : (
           <Download className="size-4" />

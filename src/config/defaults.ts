@@ -60,9 +60,9 @@ function hex(value: string | undefined, fallback: string): string {
 }
 
 export const env = {
-  university: str(process.env.NEXT_PUBLIC_DEFAULT_UNIVERSITY, ""),
-  department: str(process.env.NEXT_PUBLIC_DEFAULT_DEPARTMENT, ""),
-  logoUrl: str(process.env.NEXT_PUBLIC_DEFAULT_LOGO_URL, ""),
+  university: str(process.env.NEXT_PUBLIC_DEFAULT_UNIVERSITY, "Bangladesh University"),
+  department: str(process.env.NEXT_PUBLIC_DEFAULT_DEPARTMENT, "Department of CSE"),
+  logoUrl: str(process.env.NEXT_PUBLIC_DEFAULT_LOGO_URL, "/logos/bu-logo.png"),
   program: str(process.env.NEXT_PUBLIC_DEFAULT_PROGRAM, ""),
   batch: str(process.env.NEXT_PUBLIC_DEFAULT_BATCH, ""),
   semester: str(process.env.NEXT_PUBLIC_DEFAULT_SEMESTER, ""),
@@ -143,7 +143,7 @@ export function defaultSettings(): CoverSettings {
     extras: {
       watermark: env.watermark,
       watermarkText: env.university,
-      watermarkOpacity: 0.05,
+      watermarkOpacity: 0.07,
       watermarkScale: 0.62,
       footer: "",
       signatureLine: false,

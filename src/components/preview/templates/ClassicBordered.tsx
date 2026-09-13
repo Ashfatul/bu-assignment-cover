@@ -170,7 +170,12 @@ function Table({
           style={{
             display: "flex",
             borderTop: index === 0 ? undefined : border,
-            background: index % 2 === 1 ? tint(settings.theme.accent, 0.97) : "#ffffff",
+            background:
+              settings.extras.watermark !== "off"
+                ? "transparent"
+                : index % 2 === 1
+                  ? tint(settings.theme.accent, 0.97)
+                  : "#ffffff",
           }}
         >
           <div

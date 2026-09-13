@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageUp, RotateCcw, Trash2 } from "lucide-react";
+import { AlertCircle, ImageUp, RotateCcw, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { BUTTON_GHOST, BUTTON_SECONDARY } from "@/components/ui/controls";
@@ -16,9 +16,13 @@ const ACCEPTED = ["image/png", "image/jpeg", "image/svg+xml", "image/webp", "ima
 export function LogoPicker({
   value,
   onChange,
+  required = false,
+  error: externalError = null,
 }: {
   value: string;
   onChange: (value: string) => void;
+  required?: boolean;
+  error?: string | null;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -46,13 +50,27 @@ export function LogoPicker({
 
   const isCustom = value.startsWith("data:");
   const isDefault = Boolean(env.logoUrl) && value === env.logoUrl;
+  const activeError = error || (!value ? externalError : null);
 
   return (
     <div>
-      <div className="mb-1.5 text-xs font-medium text-[var(--ui-muted)]">University logo</div>
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className="flex items-center gap-1 text-xs font-medium text-[var(--ui-muted)]">
+          <span>University logo</span>
+          {required && (
+            <span className="text-red-500 font-bold" title="Required field">
+              *
+            </span>
+          )}
+        </span>
+      </div>
 
-      <div className="flex items-center gap-3 rounded-lg border border-[var(--ui-line)] bg-gray-50 p-3">
-        <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--ui-line)] bg-white">
+      <div
+        className={`flex items-center gap-3 rounded-lg border ${
+          activeError ? "border-red-400 bg-red-50/20" : "border-[var(--ui-line)] bg-gray-50"
+        } p-3`}
+      >
+        <div className={`flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-md border ${activeError ? "border-red-300" : "border-[var(--ui-line)]"} bg-white`}>
           {value ? (
             // eslint-disable-next-line @next/next/no-img-element -- user-supplied data URL
             <img src={value} alt="" className="size-full object-contain p-1" />
@@ -103,9 +121,10 @@ export function LogoPicker({
         </div>
       </div>
 
-      {error && (
-        <p role="alert" className="mt-1.5 text-xs text-red-600">
-          {error}
+      {activeError && (
+        <p role="alert" className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
+          <AlertCircle className="size-3.5 shrink-0" />
+          <span>{activeError}</span>
         </p>
       )}
 

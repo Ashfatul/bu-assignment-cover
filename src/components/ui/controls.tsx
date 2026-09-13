@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, RotateCcw } from "lucide-react";
+import { AlertCircle, AlertTriangle, ChevronDown, RotateCcw } from "lucide-react";
 import {
   useId,
   useState,
@@ -14,8 +14,9 @@ import {
 /* Shared styles                                                              */
 /* -------------------------------------------------------------------------- */
 
-const FIELD =
-  "w-full rounded-lg border border-[var(--ui-line)] bg-white px-3 py-2 text-sm text-[var(--ui-text)] placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-50 disabled:text-gray-400";
+const FIELD_BASE =
+  "w-full rounded-lg border px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 disabled:bg-gray-50 disabled:text-gray-400";
+const FIELD = `${FIELD_BASE} border-[var(--ui-line)] bg-white text-[var(--ui-text)] focus:border-blue-500 focus:ring-blue-500/20`;
 
 export const BUTTON =
   "inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
@@ -34,6 +35,9 @@ function FieldShell({
   hintId,
   children,
   action,
+  required,
+  error,
+  warning,
 }: {
   label?: string;
   hint?: string;
@@ -41,23 +45,48 @@ function FieldShell({
   hintId: string;
   children: ReactNode;
   action?: ReactNode;
+  required?: boolean;
+  error?: string | null;
+  warning?: string | null;
 }) {
   return (
     <div className="min-w-0">
       {label && (
         <div className="mb-1.5 flex items-center justify-between gap-2">
-          <label htmlFor={htmlFor} className="text-xs font-medium text-[var(--ui-muted)]">
-            {label}
+          <label htmlFor={htmlFor} className="flex items-center gap-1 text-xs font-medium text-[var(--ui-muted)]">
+            <span>{label}</span>
+            {required && (
+              <span className="text-red-500 font-bold" title="Required field">
+                *
+              </span>
+            )}
           </label>
-          {action}
+          <div className="flex items-center gap-1.5">
+            {warning && !error && (
+              <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+                Needs update
+              </span>
+            )}
+            {action}
+          </div>
         </div>
       )}
       {children}
-      {hint && (
+      {error ? (
+        <p role="alert" className="mt-1 flex items-center gap-1 text-xs font-medium text-red-600">
+          <AlertCircle className="size-3.5 shrink-0" />
+          <span>{error}</span>
+        </p>
+      ) : warning ? (
+        <p className="mt-1 flex items-center gap-1 text-xs text-amber-700">
+          <AlertTriangle className="size-3.5 shrink-0" />
+          <span>{warning}</span>
+        </p>
+      ) : hint ? (
         <p id={hintId} className="mt-1 text-xs text-[var(--ui-muted)]">
           {hint}
         </p>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -72,6 +101,9 @@ type TextFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "onChange" | "
   value: string;
   onValueChange: (value: string) => void;
   action?: ReactNode;
+  required?: boolean;
+  error?: string | null;
+  warning?: string | null;
 };
 
 export function TextField({
@@ -80,20 +112,42 @@ export function TextField({
   value,
   onValueChange,
   action,
+  required,
+  error,
+  warning,
   className = "",
   ...rest
 }: TextFieldProps) {
   const id = useId();
   const hintId = `${id}-hint`;
+
+  const stateClass = error
+    ? "border-red-400 bg-red-50/20 text-[var(--ui-text)] focus:border-red-500 focus:ring-red-500/20"
+    : warning
+      ? "border-amber-400 bg-amber-50/20 text-[var(--ui-text)] focus:border-amber-500 focus:ring-amber-500/20"
+      : "border-[var(--ui-line)] bg-white text-[var(--ui-text)] focus:border-blue-500 focus:ring-blue-500/20";
+
   return (
-    <FieldShell label={label} hint={hint} htmlFor={id} hintId={hintId} action={action}>
+    <FieldShell
+      label={label}
+      hint={hint}
+      htmlFor={id}
+      hintId={hintId}
+      action={action}
+      required={required}
+      error={error}
+      warning={warning}
+    >
       <input
         {...rest}
         id={id}
         value={value}
+        required={required}
+        aria-required={required ? "true" : undefined}
+        aria-invalid={Boolean(error)}
         onChange={(event) => onValueChange(event.target.value)}
         aria-describedby={hint ? hintId : undefined}
-        className={`${FIELD} ${className}`}
+        className={`${FIELD_BASE} ${stateClass} ${className}`}
       />
     </FieldShell>
   );
@@ -111,6 +165,9 @@ type TextAreaFieldProps = Omit<
   hint?: string;
   value: string;
   onValueChange: (value: string) => void;
+  required?: boolean;
+  error?: string | null;
+  warning?: string | null;
 };
 
 export function TextAreaField({
@@ -119,21 +176,42 @@ export function TextAreaField({
   value,
   onValueChange,
   rows = 3,
+  required,
+  error,
+  warning,
   className = "",
   ...rest
 }: TextAreaFieldProps) {
   const id = useId();
   const hintId = `${id}-hint`;
+
+  const stateClass = error
+    ? "border-red-400 bg-red-50/20 text-[var(--ui-text)] focus:border-red-500 focus:ring-red-500/20"
+    : warning
+      ? "border-amber-400 bg-amber-50/20 text-[var(--ui-text)] focus:border-amber-500 focus:ring-amber-500/20"
+      : "border-[var(--ui-line)] bg-white text-[var(--ui-text)] focus:border-blue-500 focus:ring-blue-500/20";
+
   return (
-    <FieldShell label={label} hint={hint} htmlFor={id} hintId={hintId}>
+    <FieldShell
+      label={label}
+      hint={hint}
+      htmlFor={id}
+      hintId={hintId}
+      required={required}
+      error={error}
+      warning={warning}
+    >
       <textarea
         {...rest}
         id={id}
         rows={rows}
         value={value}
+        required={required}
+        aria-required={required ? "true" : undefined}
+        aria-invalid={Boolean(error)}
         onChange={(event) => onValueChange(event.target.value)}
         aria-describedby={hint ? hintId : undefined}
-        className={`${FIELD} resize-y ${className}`}
+        className={`${FIELD_BASE} ${stateClass} resize-y ${className}`}
       />
     </FieldShell>
   );
@@ -437,32 +515,61 @@ export function Accordion({
   description,
   icon,
   defaultOpen = false,
+  isOpen,
+  onOpenChange,
   onReset,
+  errorCount = 0,
+  warningCount = 0,
   children,
 }: {
   title: string;
   description?: string;
   icon?: ReactNode;
   defaultOpen?: boolean;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onReset?: () => void;
+  errorCount?: number;
+  warningCount?: number;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const open = isOpen !== undefined ? isOpen : internalOpen;
+  const setOpen = onOpenChange !== undefined ? onOpenChange : setInternalOpen;
   const panelId = useId();
 
+  const borderClass =
+    errorCount > 0
+      ? "border-red-300 ring-1 ring-red-300/50"
+      : warningCount > 0
+        ? "border-amber-300 ring-1 ring-amber-300/50"
+        : "border-[var(--ui-line)]";
+
   return (
-    <section className="overflow-hidden rounded-xl border border-[var(--ui-line)] bg-white">
+    <section className={`overflow-hidden rounded-xl border ${borderClass} bg-white transition-colors`}>
       <div className="flex items-center">
         <button
           type="button"
-          onClick={() => setOpen((prev) => !prev)}
+          onClick={() => setOpen(!open)}
           aria-expanded={open}
           aria-controls={panelId}
           className="flex flex-1 items-center gap-3 px-4 py-3 text-left hover:bg-gray-50"
         >
           {icon && <span className="shrink-0 text-[var(--ui-muted)]">{icon}</span>}
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold">{title}</span>
+            <span className="flex items-center gap-2">
+              <span className="text-sm font-semibold">{title}</span>
+              {errorCount > 0 && (
+                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
+                  {errorCount} required
+                </span>
+              )}
+              {warningCount > 0 && errorCount === 0 && (
+                <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+                  {warningCount} needs update
+                </span>
+              )}
+            </span>
             {description && (
               <span className="block truncate text-xs text-[var(--ui-muted)]">{description}</span>
             )}

@@ -1,6 +1,15 @@
 "use client";
 
-import { CalendarDays, GraduationCap, School, UserRound, Users } from "lucide-react";
+import {
+  AlertCircle,
+  CalendarDays,
+  GraduationCap,
+  Plus,
+  School,
+  Trash2,
+  UserRound,
+  Users,
+} from "lucide-react";
 
 import { LogoPicker } from "@/components/form/LogoPicker";
 import {
@@ -17,33 +26,65 @@ import {
 import { todayIso } from "@/lib/date";
 import { DOCUMENT_TYPES } from "@/lib/schema";
 import { useCoverStore } from "@/lib/store";
-import { Plus, Trash2 } from "lucide-react";
 
 const MAX_MEMBERS = 8;
 
 export function InstitutionSection() {
-  const { data, patchData } = useCoverStore();
+  const {
+    data,
+    patchData,
+    settings,
+    patchSettings,
+    validation,
+    showValidation,
+    touchedFields,
+    touchField,
+    openSections,
+    setSectionOpen,
+  } = useCoverStore();
   const { institution } = data;
+  const isWatermarkOn = settings.extras.watermark === "logo";
+
+  const getError = (key: string) =>
+    showValidation || touchedFields[key] ? validation.errors[key] ?? null : null;
+  const getWarning = (key: string) => validation.warnings[key] ?? null;
 
   return (
     <Accordion
       title="Institution"
       description={institution.university || "University, department and logo"}
       icon={<School className="size-4" />}
-      defaultOpen
+      isOpen={openSections.institution}
+      onOpenChange={(open) => setSectionOpen("institution", open)}
+      errorCount={showValidation ? validation.sectionErrors.institution : 0}
+      warningCount={validation.sectionWarnings.institution}
     >
       <Stack>
         <TextField
           label="University"
           placeholder="Bangladesh University"
+          required
           value={institution.university}
-          onValueChange={(university) => patchData("institution", { university })}
+          error={getError("university")}
+          warning={getWarning("university")}
+          onValueChange={(university) => {
+            touchField("university");
+            patchData("institution", { university });
+          }}
+          onBlur={() => touchField("university")}
         />
         <TextField
           label="Department / Faculty"
           placeholder="Department of CSE"
+          required
           value={institution.department}
-          onValueChange={(department) => patchData("institution", { department })}
+          error={getError("department")}
+          warning={getWarning("department")}
+          onValueChange={(department) => {
+            touchField("department");
+            patchData("institution", { department });
+          }}
+          onBlur={() => touchField("department")}
         />
         <TextField
           label="Tagline (optional)"
@@ -53,7 +94,21 @@ export function InstitutionSection() {
         />
         <LogoPicker
           value={institution.logo}
-          onChange={(logo) => patchData("institution", { logo })}
+          required
+          error={getError("logo")}
+          onChange={(logo) => {
+            touchField("logo");
+            patchData("institution", { logo });
+          }}
+        />
+        <Switch
+          label="Placeholder behind (watermark)"
+          hint="Show this logo as a faded background watermark behind the cover"
+          checked={isWatermarkOn}
+          disabled={!institution.logo}
+          onCheckedChange={(checked) =>
+            patchSettings("extras", { watermark: checked ? "logo" : "off" })
+          }
         />
       </Stack>
     </Accordion>
@@ -61,15 +116,31 @@ export function InstitutionSection() {
 }
 
 export function DocumentSection() {
-  const { data, patchData } = useCoverStore();
+  const {
+    data,
+    patchData,
+    validation,
+    showValidation,
+    touchedFields,
+    touchField,
+    openSections,
+    setSectionOpen,
+  } = useCoverStore();
   const { document: doc } = data;
+
+  const getError = (key: string) =>
+    showValidation || touchedFields[key] ? validation.errors[key] ?? null : null;
+  const getWarning = (key: string) => validation.warnings[key] ?? null;
 
   return (
     <Accordion
       title="Assignment"
       description={doc.courseTitle || doc.topic || "Course, code and topic"}
       icon={<GraduationCap className="size-4" />}
-      defaultOpen
+      isOpen={openSections.document}
+      onOpenChange={(open) => setSectionOpen("document", open)}
+      errorCount={showValidation ? validation.sectionErrors.document : 0}
+      warningCount={validation.sectionWarnings.document}
     >
       <Stack>
         <Grid>
@@ -116,22 +187,43 @@ export function DocumentSection() {
           <TextField
             label="Course title"
             placeholder="Digital System Design Lab"
+            required
             value={doc.courseTitle}
-            onValueChange={(courseTitle) => patchData("document", { courseTitle })}
+            error={getError("courseTitle")}
+            warning={getWarning("courseTitle")}
+            onValueChange={(courseTitle) => {
+              touchField("courseTitle");
+              patchData("document", { courseTitle });
+            }}
+            onBlur={() => touchField("courseTitle")}
           />
           <TextField
             label="Course code"
             placeholder="CSE-3204"
+            required
             value={doc.courseCode}
-            onValueChange={(courseCode) => patchData("document", { courseCode })}
+            error={getError("courseCode")}
+            warning={getWarning("courseCode")}
+            onValueChange={(courseCode) => {
+              touchField("courseCode");
+              patchData("document", { courseCode });
+            }}
+            onBlur={() => touchField("courseCode")}
           />
         </Grid>
 
         <TextAreaField
           label="Topic"
           placeholder="Combinational Logic Using Multiplexers, PLA, and PAL"
+          required
           value={doc.topic}
-          onValueChange={(topic) => patchData("document", { topic })}
+          error={getError("topic")}
+          warning={getWarning("topic")}
+          onValueChange={(topic) => {
+            touchField("topic");
+            patchData("document", { topic });
+          }}
+          onBlur={() => touchField("topic")}
           rows={2}
         />
 
@@ -148,30 +240,63 @@ export function DocumentSection() {
 }
 
 export function StudentSection() {
-  const { data, patchData, addMember, updateMember, removeMember } = useCoverStore();
+  const {
+    data,
+    patchData,
+    addMember,
+    updateMember,
+    removeMember,
+    validation,
+    showValidation,
+    touchedFields,
+    touchField,
+    openSections,
+    setSectionOpen,
+  } = useCoverStore();
   const { student, group } = data;
+
+  const getError = (key: string) =>
+    showValidation || touchedFields[key] ? validation.errors[key] ?? null : null;
+  const getWarning = (key: string) => validation.warnings[key] ?? null;
 
   return (
     <Accordion
       title="Submitted By"
       description={student.name || "Your details"}
       icon={<UserRound className="size-4" />}
-      defaultOpen
+      isOpen={openSections.student}
+      onOpenChange={(open) => setSectionOpen("student", open)}
+      errorCount={showValidation ? validation.sectionErrors.student : 0}
+      warningCount={validation.sectionWarnings.student}
     >
       <Stack>
         <Grid>
           <TextField
             label="Full name"
             placeholder="A. A. M Ashfatul Islam"
+            required
             value={student.name}
-            onValueChange={(name) => patchData("student", { name })}
+            error={getError("studentName")}
+            warning={getWarning("studentName")}
+            onValueChange={(name) => {
+              touchField("studentName");
+              patchData("student", { name });
+            }}
+            onBlur={() => touchField("studentName")}
             autoComplete="name"
           />
           <TextField
             label="Student ID"
             placeholder="202411068038"
+            required
             value={student.studentId}
-            onValueChange={(studentId) => patchData("student", { studentId })}
+            error={getError("studentId")}
+            warning={getWarning("studentId")}
+            onValueChange={(studentId) => {
+              touchField("studentId");
+              patchData("student", { studentId });
+            }}
+            onBlur={() => touchField("studentId")}
             inputMode="numeric"
           />
         </Grid>
@@ -180,14 +305,28 @@ export function StudentSection() {
           <TextField
             label="Program"
             placeholder="B.Sc. in CSE"
+            required
             value={student.program}
-            onValueChange={(program) => patchData("student", { program })}
+            error={getError("program")}
+            warning={getWarning("program")}
+            onValueChange={(program) => {
+              touchField("program");
+              patchData("student", { program });
+            }}
+            onBlur={() => touchField("program")}
           />
           <TextField
             label="Batch"
             placeholder="68 - Evening"
+            required
             value={student.batch}
-            onValueChange={(batch) => patchData("student", { batch })}
+            error={getError("batch")}
+            warning={getWarning("batch")}
+            onValueChange={(batch) => {
+              touchField("batch");
+              patchData("student", { batch });
+            }}
+            onBlur={() => touchField("batch")}
           />
         </Grid>
 
@@ -195,14 +334,28 @@ export function StudentSection() {
           <TextField
             label="Semester"
             placeholder="Summer 2025"
+            required
             value={student.semester}
-            onValueChange={(semester) => patchData("student", { semester })}
+            error={getError("semester")}
+            warning={getWarning("semester")}
+            onValueChange={(semester) => {
+              touchField("semester");
+              patchData("student", { semester });
+            }}
+            onBlur={() => touchField("semester")}
           />
           <TextField
             label="Section / Group"
             placeholder="B"
+            required
             value={student.section}
-            onValueChange={(section) => patchData("student", { section })}
+            error={getError("section")}
+            warning={getWarning("section")}
+            onValueChange={(section) => {
+              touchField("section");
+              patchData("student", { section });
+            }}
+            onBlur={() => touchField("section")}
           />
         </Grid>
 
@@ -234,6 +387,13 @@ export function StudentSection() {
 
           {group.enabled && (
             <div className="mt-3 flex flex-col gap-2">
+              {showValidation && validation.errors["groupMembers"] && (
+                <p role="alert" className="flex items-center gap-1 text-xs font-medium text-red-600">
+                  <AlertCircle className="size-3.5 shrink-0" />
+                  <span>{validation.errors["groupMembers"]}</span>
+                </p>
+              )}
+
               {group.members.map((member, index) => (
                 <div key={member.id} className="flex items-end gap-2">
                   <span className="pb-2.5 text-xs text-[var(--ui-muted)] tabular-nums">
@@ -243,7 +403,13 @@ export function StudentSection() {
                     <TextField
                       label={index === 0 ? "Name" : undefined}
                       placeholder="Member name"
+                      required
                       value={member.name}
+                      error={
+                        showValidation && !member.name.trim()
+                          ? "Name is required"
+                          : null
+                      }
                       onValueChange={(name) => updateMember(member.id, { name })}
                     />
                   </div>
@@ -251,7 +417,13 @@ export function StudentSection() {
                     <TextField
                       label={index === 0 ? "ID" : undefined}
                       placeholder="ID"
+                      required
                       value={member.studentId}
+                      error={
+                        showValidation && !member.studentId.trim()
+                          ? "ID is required"
+                          : null
+                      }
                       onValueChange={(studentId) => updateMember(member.id, { studentId })}
                     />
                   </div>
@@ -290,29 +462,59 @@ export function StudentSection() {
 }
 
 export function TeacherSection() {
-  const { data, patchData } = useCoverStore();
+  const {
+    data,
+    patchData,
+    validation,
+    showValidation,
+    touchedFields,
+    touchField,
+    openSections,
+    setSectionOpen,
+  } = useCoverStore();
   const { teacher } = data;
+
+  const getError = (key: string) =>
+    showValidation || touchedFields[key] ? validation.errors[key] ?? null : null;
+  const getWarning = (key: string) => validation.warnings[key] ?? null;
 
   return (
     <Accordion
       title="Submitted To"
       description={teacher.name || "Your instructor"}
       icon={<Users className="size-4" />}
-      defaultOpen
+      isOpen={openSections.teacher}
+      onOpenChange={(open) => setSectionOpen("teacher", open)}
+      errorCount={showValidation ? validation.sectionErrors.teacher : 0}
+      warningCount={validation.sectionWarnings.teacher}
     >
       <Stack>
         <Grid>
           <TextField
             label="Name"
             placeholder="Faria Afrin Niha"
+            required
             value={teacher.name}
-            onValueChange={(name) => patchData("teacher", { name })}
+            error={getError("teacherName")}
+            warning={getWarning("teacherName")}
+            onValueChange={(name) => {
+              touchField("teacherName");
+              patchData("teacher", { name });
+            }}
+            onBlur={() => touchField("teacherName")}
           />
           <TextField
             label="Designation"
             placeholder="Lecturer"
+            required
             value={teacher.designation}
-            onValueChange={(designation) => patchData("teacher", { designation })}
+            error={getError("teacherDesignation")}
+            warning={getWarning("teacherDesignation")}
+            onValueChange={(designation) => {
+              touchField("teacherDesignation");
+              patchData("teacher", { designation });
+            }}
+            onBlur={() => touchField("teacherDesignation")}
           />
         </Grid>
 
@@ -320,14 +522,28 @@ export function TeacherSection() {
           <TextField
             label="Department"
             placeholder="Department of CSE"
+            required
             value={teacher.department}
-            onValueChange={(department) => patchData("teacher", { department })}
+            error={getError("teacherDepartment")}
+            warning={getWarning("teacherDepartment")}
+            onValueChange={(department) => {
+              touchField("teacherDepartment");
+              patchData("teacher", { department });
+            }}
+            onBlur={() => touchField("teacherDepartment")}
           />
           <TextField
             label="Institution"
             placeholder="Bangladesh University"
+            required
             value={teacher.institution}
-            onValueChange={(institution) => patchData("teacher", { institution })}
+            error={getError("teacherInstitution")}
+            warning={getWarning("teacherInstitution")}
+            onValueChange={(institution) => {
+              touchField("teacherInstitution");
+              patchData("teacher", { institution });
+            }}
+            onBlur={() => touchField("teacherInstitution")}
           />
         </Grid>
 
@@ -344,27 +560,53 @@ export function TeacherSection() {
 }
 
 export function DatesSection() {
-  const { data, patchData } = useCoverStore();
+  const {
+    data,
+    patchData,
+    validation,
+    showValidation,
+    touchedFields,
+    touchField,
+    openSections,
+    setSectionOpen,
+  } = useCoverStore();
   const { dates } = data;
+
+  const getError = (key: string) =>
+    showValidation || touchedFields[key] ? validation.errors[key] ?? null : null;
+  const getWarning = (key: string) => validation.warnings[key] ?? null;
 
   return (
     <Accordion
       title="Dates"
       description={dates.submission || "Submission date"}
       icon={<CalendarDays className="size-4" />}
-      defaultOpen
+      isOpen={openSections.dates}
+      onOpenChange={(open) => setSectionOpen("dates", open)}
+      errorCount={showValidation ? validation.sectionErrors.dates : 0}
+      warningCount={validation.sectionWarnings.dates}
     >
       <Stack>
         <Grid>
           <TextField
             label="Date of submission"
             type="date"
+            required
             value={dates.submission}
-            onValueChange={(submission) => patchData("dates", { submission })}
+            error={getError("submissionDate")}
+            warning={getWarning("submissionDate")}
+            onValueChange={(submission) => {
+              touchField("submissionDate");
+              patchData("dates", { submission });
+            }}
+            onBlur={() => touchField("submissionDate")}
             action={
               <button
                 type="button"
-                onClick={() => patchData("dates", { submission: todayIso() })}
+                onClick={() => {
+                  touchField("submissionDate");
+                  patchData("dates", { submission: todayIso() });
+                }}
                 className={`${BUTTON_GHOST} px-2 py-0.5 text-xs`}
               >
                 Today

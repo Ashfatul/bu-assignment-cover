@@ -20,6 +20,8 @@ import {
   type GroupMember,
 } from "@/lib/schema";
 
+import { validateCoverData, type SectionKey, type ValidationReport } from "@/lib/validation";
+
 type DataSection = keyof CoverData;
 type SettingsGroup = "theme" | "layout" | "extras";
 
@@ -27,6 +29,15 @@ type Store = {
   state: CoverState;
   data: CoverData;
   settings: CoverSettings;
+
+  validation: ValidationReport;
+  showValidation: boolean;
+  setShowValidation: (show: boolean) => void;
+  touchedFields: Record<string, boolean>;
+  touchField: (field: string) => void;
+  openSections: Record<SectionKey, boolean>;
+  setSectionOpen: (section: SectionKey, open: boolean) => void;
+  openAllSectionsWithErrors: () => void;
 
   /** Patch one group of the cover data, e.g. `patchData("student", { name })`. */
   patchData: <K extends DataSection>(section: K, patch: Partial<CoverData[K]>) => void;
@@ -58,6 +69,37 @@ export function CoverStoreProvider({
 }) {
   const [state, setState] = useState<CoverState>(() => initialState ?? defaultState());
   const memberSeq = useRef(0);
+
+  const validation = useMemo(() => validateCoverData(state.data), [state.data]);
+  const [showValidation, setShowValidation] = useState(false);
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+
+  const touchField = useCallback((field: string) => {
+    setTouchedFields((prev) => (prev[field] ? prev : { ...prev, [field]: true }));
+  }, []);
+
+  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
+    institution: true,
+    document: true,
+    student: true,
+    teacher: true,
+    dates: true,
+  });
+
+  const setSectionOpen = useCallback((section: SectionKey, open: boolean) => {
+    setOpenSections((prev) => ({ ...prev, [section]: open }));
+  }, []);
+
+  const openAllSectionsWithErrors = useCallback(() => {
+    const report = validateCoverData(state.data);
+    setOpenSections((prev) => {
+      const next = { ...prev };
+      for (const [sec, count] of Object.entries(report.sectionErrors)) {
+        if (count > 0) next[sec as SectionKey] = true;
+      }
+      return next;
+    });
+  }, [state.data]);
 
   const patchData = useCallback(
     <K extends DataSection>(section: K, patch: Partial<CoverData[K]>) => {
@@ -151,6 +193,8 @@ export function CoverStoreProvider({
   }, []);
 
   const replaceState = useCallback((next: CoverState) => {
+    setShowValidation(false);
+    setTouchedFields({});
     // Keep generated member ids unique after an import.
     const numbers = next.data.group.members
       .map((m) => Number(/^m(\d+)$/.exec(m.id)?.[1] ?? 0))
@@ -159,7 +203,11 @@ export function CoverStoreProvider({
     setState(next);
   }, []);
 
-  const resetAll = useCallback(() => setState(defaultState()), []);
+  const resetAll = useCallback(() => {
+    setShowValidation(false);
+    setTouchedFields({});
+    setState(defaultState());
+  }, []);
 
   const resetSettings = useCallback(() => {
     setState((prev) => ({ ...prev, settings: defaultSettings() }));
@@ -177,6 +225,14 @@ export function CoverStoreProvider({
       state,
       data: state.data,
       settings: state.settings,
+      validation,
+      showValidation,
+      setShowValidation,
+      touchedFields,
+      touchField,
+      openSections,
+      setSectionOpen,
+      openAllSectionsWithErrors,
       patchData,
       patchSettings,
       setTemplate,
@@ -192,6 +248,13 @@ export function CoverStoreProvider({
     }),
     [
       state,
+      validation,
+      showValidation,
+      touchedFields,
+      touchField,
+      openSections,
+      setSectionOpen,
+      openAllSectionsWithErrors,
       patchData,
       patchSettings,
       setTemplate,

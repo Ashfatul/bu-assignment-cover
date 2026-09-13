@@ -86,7 +86,7 @@ department:
 ```ini
 NEXT_PUBLIC_DEFAULT_UNIVERSITY="Bangladesh University"
 NEXT_PUBLIC_DEFAULT_DEPARTMENT="Department of CSE"
-NEXT_PUBLIC_DEFAULT_LOGO_URL="/logos/default-logo.svg"
+NEXT_PUBLIC_DEFAULT_LOGO_URL="/logos/bu-logo.png"
 NEXT_PUBLIC_DEFAULT_PROGRAM="B.Sc. in CSE"
 NEXT_PUBLIC_DEFAULT_BATCH="68 - Evening"
 NEXT_PUBLIC_DEFAULT_SEMESTER="Summer 2025"
@@ -102,7 +102,7 @@ Two ways:
 2. **Per-user** — click **Upload** in the Institution section. The file is read into a data URL and
    stays in your browser; it is never sent anywhere. Keep it under 1 MB.
 
-The shipped `default-logo.svg` is a neutral placeholder — replace it.
+The official Bangladesh University logo is included at `public/logos/bu-logo.png` by default.
 
 ### Email over SMTP
 
